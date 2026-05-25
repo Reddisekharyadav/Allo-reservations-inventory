@@ -18,7 +18,7 @@ if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
   exit 1
 }
 
-$repoDefault = 'your-github-username/your-repo-name'
+$repoDefault = 'Reddisekharyadav/Allo-reservations-inventory'
 $repo = Read-Host "Enter GitHub repo (owner/repo) [$repoDefault]"
 if ([string]::IsNullOrWhiteSpace($repo)) { $repo = $repoDefault }
 

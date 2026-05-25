@@ -14,7 +14,7 @@ if ! command -v gh >/dev/null 2>&1; then
   exit 1
 fi
 
-repo_default="your-github-username/your-repo-name"
+repo_default="Reddisekharyadav/Allo-reservations-inventory"
 read -rp "Enter GitHub repo (owner/repo) [${repo_default}]: " repo
 repo=${repo:-$repo_default}
 
