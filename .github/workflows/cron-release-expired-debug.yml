@@ -3,28 +3,44 @@ name: cron-release-expired-debug
 on:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   debug-call:
     runs-on: ubuntu-latest
+    timeout-minutes: 2
     steps:
       - name: Call route and show response
         env:
           DEPLOYMENT_URL: ${{ secrets.DEPLOYMENT_URL }}
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
         run: |
+          set -euo pipefail
+
           if [ -z "$DEPLOYMENT_URL" ]; then
             echo "Missing DEPLOYMENT_URL secret"; exit 1
           fi
           if [ -z "$CRON_SECRET" ]; then
             echo "Missing CRON_SECRET secret"; exit 1
           fi
-          echo "Calling $DEPLOYMENT_URL/api/cron/release-expired"
-          body=$(curl -sS -H "x-cron-secret: $CRON_SECRET" -w "\nHTTP_STATUS:%{http_code}\n" "$DEPLOYMENT_URL/api/cron/release-expired" || true)
+
+          deployment_url="${DEPLOYMENT_URL%/}"
+          endpoint="$deployment_url/api/cron/release-expired"
+          echo "Calling $endpoint"
+
+          response_file="$(mktemp)"
+          status="$(curl --silent --show-error --location --max-time 30 \
+            --output "$response_file" \
+            --write-out "%{http_code}" \
+            --header "x-cron-secret: $CRON_SECRET" \
+            "$endpoint" || true)"
+
           echo "----- response -----"
-          echo "$body"
-          # exit non-zero if status not 200
-          status=$(echo "$body" | tr '\n' ' ' | sed -E 's/.*HTTP_STATUS:([0-9]{3}).*/\1/')
+          cat "$response_file"
+          echo
           echo "HTTP status: $status"
+
           if [ "$status" != "200" ]; then
             echo "Request did not return 200"; exit 1
           fi

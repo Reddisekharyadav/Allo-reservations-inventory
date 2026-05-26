@@ -5,19 +5,43 @@ on:
     - cron: '*/5 * * * *' # every 5 minutes
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   call-release-expired:
     runs-on: ubuntu-latest
+    timeout-minutes: 2
     steps:
       - name: Call release-expired route
         env:
           DEPLOYMENT_URL: ${{ secrets.DEPLOYMENT_URL }}
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
         run: |
+          set -euo pipefail
+
           if [ -z "$DEPLOYMENT_URL" ]; then
             echo "Missing DEPLOYMENT_URL secret"; exit 1
           fi
           if [ -z "$CRON_SECRET" ]; then
             echo "Missing CRON_SECRET secret"; exit 1
           fi
-          curl -fsS -H "x-cron-secret: $CRON_SECRET" "$DEPLOYMENT_URL/api/cron/release-expired"
+
+          deployment_url="${DEPLOYMENT_URL%/}"
+          endpoint="$deployment_url/api/cron/release-expired"
+          echo "Calling $endpoint"
+
+          response_file="$(mktemp)"
+          status="$(curl --silent --show-error --location --max-time 30 \
+            --output "$response_file" \
+            --write-out "%{http_code}" \
+            --header "x-cron-secret: $CRON_SECRET" \
+            "$endpoint")"
+
+          cat "$response_file"
+          echo
+          echo "HTTP status: $status"
+
+          if [ "$status" != "200" ]; then
+            echo "Request did not return 200"; exit 1
+          fi

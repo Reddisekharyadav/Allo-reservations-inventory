@@ -43,7 +43,7 @@ Write-Host "GitHub secrets set successfully."
 Write-Host "Next step: add the same CRON_SECRET to your Vercel project environment variables."
 Write-Host "If you have the Vercel CLI installed and logged in, run this command and paste the generated secret when prompted:"
 Write-Host "  vercel env add CRON_SECRET production"
-Write-Host "Or add it via the Vercel Dashboard → Project → Settings → Environment Variables."
+Write-Host "Or add it via the Vercel Dashboard > Project > Settings > Environment Variables."
 
 $run = Read-Host "Trigger the workflow now? (y/N)"
 if ($run -match '^[Yy]') {
