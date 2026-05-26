@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma";
@@ -12,7 +13,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing params" }, { status: 400 });
     }
 
-    const reservation = await prisma.$transaction(async (tx) => {
+    const reservation = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const rows = await tx.$queryRaw<Array<{ id: string; totalStock: number; reservedStock: number }>>`
         SELECT * FROM inventory WHERE "productId" = ${productId} AND "warehouseId" = ${warehouseId} FOR UPDATE
       `;
@@ -53,8 +54,8 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json(reservation, { status: 201 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error(error);
-    return NextResponse.json({ error: error?.message || "Failed to create reservation" }, { status: 500 });
+    return NextResponse.json({ error: error instanceof Error ? error.message : "Failed to create reservation" }, { status: 500 });
   }
 }

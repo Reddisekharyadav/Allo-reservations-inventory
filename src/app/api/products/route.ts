@@ -2,6 +2,21 @@ import { NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma";
 
+type ProductWithInventory = {
+  id: string;
+  name: string;
+  description: string | null;
+  inventory: Array<{
+    warehouseId: string;
+    totalStock: number;
+    reservedStock: number;
+    warehouse: {
+      name: string;
+      location: string;
+    };
+  }>;
+};
+
 export async function GET() {
   try {
     const products = await prisma.product.findMany({
@@ -14,7 +29,7 @@ export async function GET() {
       },
     });
 
-    const mapped = products.map((p) => ({
+    const mapped = products.map((p: ProductWithInventory) => ({
       id: p.id,
       name: p.name,
       description: p.description,
