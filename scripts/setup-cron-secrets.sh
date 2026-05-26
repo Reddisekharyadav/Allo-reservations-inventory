@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Setup script for POSIX shells (Linux / macOS / WSL).
-# Generates a CRON_SECRET, sets GitHub Actions secrets (DEPLOYMENT_URL and CRON_SECRET),
+# Generates a CRON_SECRET, sets the GitHub Actions CRON_SECRET secret,
 # and optionally triggers the workflow. Requires `gh` CLI and `node` installed and logged in.
 
 set -euo pipefail
@@ -18,20 +18,13 @@ repo_default="Reddisekharyadav/Allo-reservations-inventory"
 read -rp "Enter GitHub repo (owner/repo) [${repo_default}]: " repo
 repo=${repo:-$repo_default}
 
-read -rp "Enter your DEPLOYMENT_URL (e.g. https://your-app.vercel.app): " deployment_url
-if [ -z "$deployment_url" ]; then
-  echo "DEPLOYMENT_URL is required." >&2
-  exit 1
-fi
-
 secret=$(node -e "console.log(require('crypto').randomBytes(32).toString('hex'))")
 echo "Generated CRON_SECRET: (hidden)"
 
-echo "Setting GitHub secrets for repository $repo..."
-gh secret set DEPLOYMENT_URL --body "$deployment_url" --repo "$repo"
+echo "Setting GitHub CRON_SECRET for repository $repo..."
 gh secret set CRON_SECRET --body "$secret" --repo "$repo"
 
-echo "GitHub secrets set successfully."
+echo "GitHub secret set successfully."
 echo "Next step: add the same CRON_SECRET to your Vercel project environment variables."
 echo "If you have the Vercel CLI installed and logged in, run this command and paste the generated secret when prompted:" 
 echo "  vercel env add CRON_SECRET production"
