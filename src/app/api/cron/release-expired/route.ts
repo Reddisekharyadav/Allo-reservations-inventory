@@ -3,9 +3,14 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(request: Request) {
-  const secret = request.headers.get("x-cron-secret");
+  const secret = request.headers.get("x-cron-secret")?.trim();
+  const cronSecret = process.env.CRON_SECRET?.trim();
 
-  if (!secret || secret !== process.env.CRON_SECRET) {
+  if (!cronSecret) {
+    return NextResponse.json({ error: "CRON_SECRET is not configured" }, { status: 500 });
+  }
+
+  if (!secret || secret !== cronSecret) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
