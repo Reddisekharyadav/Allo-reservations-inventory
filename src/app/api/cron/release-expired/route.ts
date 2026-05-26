@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma";
@@ -20,25 +21,46 @@ export async function GET(request: Request) {
         status: "PENDING",
         expiresAt: { lt: new Date() },
       },
+      select: {
+        id: true,
+        productId: true,
+        warehouseId: true,
+        quantity: true,
+      },
     });
 
-    for (const reservation of expiredReservations) {
-      await prisma.$transaction(async (tx) => {
-        const rows = await tx.$queryRaw<Array<{ id: string }>>`
-          SELECT * FROM inventory WHERE "productId" = ${reservation.productId} AND "warehouseId" = ${reservation.warehouseId} FOR UPDATE
-        `;
+    const releasedReservations = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+      let released = 0;
 
-        const inventory = rows[0];
+      for (const reservation of expiredReservations) {
+        const expired = await tx.reservation.updateMany({
+          where: {
+            id: reservation.id,
+            status: "PENDING",
+            expiresAt: { lt: new Date() },
+          },
+          data: { status: "EXPIRED" },
+        });
 
-        if (!inventory) return;
+        if (expired.count === 0) continue;
 
-        await tx.inventory.update({ where: { id: inventory.id }, data: { reservedStock: { decrement: reservation.quantity } } });
+        await tx.inventory.update({
+          where: {
+            productId_warehouseId: {
+              productId: reservation.productId,
+              warehouseId: reservation.warehouseId,
+            },
+          },
+          data: { reservedStock: { decrement: reservation.quantity } },
+        });
 
-        await tx.reservation.update({ where: { id: reservation.id }, data: { status: "EXPIRED" } });
-      });
-    }
+        released += 1;
+      }
 
-    return NextResponse.json({ success: true, releasedReservations: expiredReservations.length });
+      return released;
+    });
+
+    return NextResponse.json({ success: true, releasedReservations });
   } catch (error) {
     console.error(error);
     return NextResponse.json({ error: "Failed to release expired reservations" }, { status: 500 });
