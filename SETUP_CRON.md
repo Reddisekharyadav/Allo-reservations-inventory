@@ -2,7 +2,7 @@
 
 - What these scripts do:
   - Generate a cryptographically secure `CRON_SECRET` locally.
-  - Set GitHub Actions repository secrets `DEPLOYMENT_URL` and `CRON_SECRET` using the `gh` CLI.
+  - Set the GitHub Actions repository secret `CRON_SECRET` using the `gh` CLI.
   - Optionally trigger the `cron-release-expired` workflow.
 
 - Files added:
@@ -24,8 +24,8 @@
     - `./scripts/setup-cron-secrets.sh`
 
 - Vercel env var (manual step):
-  - After the scripts set GitHub secrets, add the same `CRON_SECRET` to Vercel:
+  - After the scripts set the GitHub secret, add the same `CRON_SECRET` to Vercel:
     - Using Vercel CLI: `vercel env add CRON_SECRET production` and paste the secret when prompted.
     - Using the Dashboard: Project > Settings > Environment Variables > Add `CRON_SECRET`.
 
-Run the appropriate setup script, then trigger `cron-release-expired-debug` from GitHub Actions to verify the endpoint returns HTTP 200.
+The workflows call `https://allo-reservations-inventory.vercel.app/api/cron/release-expired`. Run the appropriate setup script, then trigger `cron-release-expired-debug` from GitHub Actions to verify the endpoint returns HTTP 200.

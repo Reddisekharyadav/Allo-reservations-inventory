@@ -15,7 +15,7 @@ jobs:
     steps:
       - name: Call release-expired route
         env:
-          DEPLOYMENT_URL: ${{ secrets.DEPLOYMENT_URL }}
+          DEPLOYMENT_URL: https://allo-reservations-inventory.vercel.app
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
         run: |
           set -euo pipefail
